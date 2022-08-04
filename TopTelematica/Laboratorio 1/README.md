@@ -1,7 +1,7 @@
 # Laboratorio 1 - Tópicos especiales en telemática
  __David Gomez Correa__
-*** Código estudiante: 202017511010 ***
-*** Eafit ***
+__Código estudiante: 202017511010__
+__Eafit__
                 
 ----
 [TOC]
