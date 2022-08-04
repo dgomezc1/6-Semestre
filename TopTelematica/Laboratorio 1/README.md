@@ -9,10 +9,10 @@
 ####Nota importante: ####
 El código presentado toma como base el Proyecto #2 de telemática presentado en el semestre 2022-1, realizado por David Gomez Correa (mi persona) y Samuel Meneses Diaz (Compañero del curso), dicho código fue modificado para atender a los requerimientos de este laboratorio.
 
-#### compilación y ejecución
+#### compilación y ejecución ####
 El laboratorio fue realizado utilizando el lenguaje de programación de Python, para su ejecución, únicamente es necesario tener instalado Python por defecto, ya que este incluye las librerías necesarias para su ejecución. Para correrlo, únicamente es necesario ejecutar el archivo Server.py con el siguiente comando `python Server.py`, con el cual iniciara la ejecución del proyecto.
 
-#### Diseño de solucion
+#### Diseño de solucion ####
 Como propuesta de solucion, se plantea un servidor minimalista, que con base al protocolo HTTP v0.9 es capaz de procesar Resquest GET, y retornar el recurso solicitado (en caso de existir) utilizando un HTTP Response.
 
 Se tiene un archivo Server.py como el controlador de flujo principal, dicho archivo se encarga de las funciones más relevantes a nivel de conexión, como lo son:
@@ -24,7 +24,7 @@ Se tiene un archivo Server.py como el controlador de flujo principal, dicho arch
 Igualmente se tiene la clase *get.py*, que es la encargada de procesar las solicitudes get entrantes, dicha función se encarga de:
 - **Procesamiento y lectura de archivos:** Con base a la dirección entregada dentro del HTTP Request, el método *get_object* se encarga de reescribir el path para posteriormente intentar leer el archivo y abrirlo; seguido a esto, se realiza la codificación del encabezado de respuesta y se adiciona el archivo en formato binario.
 
-####Detalles técnicos####
+#### etalles técnicos ####
 librerías utilizadas:
 - **scokets:** Es utilizada para la creación de nuestro canal de comunicación
 - **threading:** librería utilizada que permite la creación de hilos de procesamiento, que permite al servidor ser concurrente al crear un hilo por cada petición entrante
