@@ -1,8 +1,7 @@
 # ********************************************************************************************
-    # Proyecto 2
-    # Course: ST0255 - Telemática
+    # Laboratorio #1
+    # Course: ST0263 - Topicos Especiales en Telemática
     # MultiThread TCP-SocketServer
-    #Samuel Meneses Diaz
     #David Gomez Correa
 # ********************************************************************************************
 

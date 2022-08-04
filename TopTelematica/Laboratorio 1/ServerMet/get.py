@@ -1,3 +1,10 @@
+# ********************************************************************************************
+    # Laboratorio #1
+    # Course: ST0263 - Topicos Especiales en Telemática
+    # MultiThread TCP-SocketServer
+    #David Gomez Correa
+# ********************************************************************************************
+
 
 import constants
 import re
@@ -14,6 +21,8 @@ def get_tipo(archivo):                              #Seleccion de tipo de archiv
         tipo = "text/css"
     elif archivo.endswith('.pdf'):
         tipo = "application/pdf"
+    elif archivo.endswith('.mp4'):
+        tipo = "video/mp4"
     else:
         tipo = "text/html"
     return tipo
