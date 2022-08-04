@@ -7,7 +7,9 @@ __Eafit__
                 
 ----
 
+
 [TOC]
+
 
 #### Nota importante: ####
 El código presentado toma como base el Proyecto #2 de telemática presentado en el semestre 2022-1, realizado por David Gomez Correa (mi persona) y Samuel Meneses Diaz (Compañero del curso), dicho código fue modificado para atender a los requerimientos de este laboratorio.
