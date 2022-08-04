@@ -8,11 +8,11 @@ __Eafit__
 ----
 
 
-1. [Laboratorio 1](#laboratorio-1---tópicos-especiales-en-telemática)
-    - [Nota importante](#nota-importante)
-    - [Compilación y ejecucion](#compilación-y-ejecución)
-    - [Diseño de solucion](#diseño-de-solucion)
-    - [Detalles técnicos](#detalles-técnicos)
+- [Laboratorio 1](#laboratorio-1---tópicos-especiales-en-telemática)
+  - [Nota importante](#nota-importante)
+  - [Compilación y ejecucion](#compilación-y-ejecución)
+  - [Diseño de solucion](#diseño-de-solucion)
+  - [Detalles técnicos](#detalles-técnicos)
 
 
 #### Nota importante: ####
