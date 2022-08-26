@@ -7,6 +7,8 @@
 #include<math.h>
 #include<chrono>
 #include <vector>
+#include <ctime> 
+
 
 using namespace std;
 double resultado = 0;
@@ -15,9 +17,9 @@ double resultado = 0;
 //  Forward declarations:
 BOOL ListProcessThreads( DWORD dwOwnerPID );
 void calculoPi(double start, double end, double uN);
-void createThreadforPi(int numProcessors,int numOperationProccesor, int start, int end, int residuo, int iteraciones);
 
 int main( void ){
+    unsigned t0, t1;
     int numProcessors = std::thread::hardware_concurrency();
     int iteraciones;
     cout << "Ingrese el numero de iteraciornes: ";
@@ -27,35 +29,21 @@ int main( void ){
     int start = 0;
     int end = numOperationProccesor;
     int residuo = iteraciones%numProcessors;
-    
     auto t_start = std::chrono::high_resolution_clock::now();
-    createThreadforPi(numProcessors, numOperationProccesor,start,end,residuo,iteraciones);
+    t0=clock();
 
+    calculoPi(0,iteraciones, iteraciones);
+    ListProcessThreads(GetCurrentProcessId());
+
+    t1 = clock();
+    double time = (double(t1-t0)/CLOCKS_PER_SEC);
     auto t_end = std::chrono::high_resolution_clock::now();
     double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
-    _tprintf(TEXT("\nTiempo consumo de procesador = %f"),elapsed_time_ms);
+    _tprintf(TEXT("\nTiempo consumo de procesador = %f\nTiempo real: %f"),elapsed_time_ms,time);
     _tprintf(TEXT("\nResultado de PI = %.16f"),resultado);
   return 0;
 }
 
-void createThreadforPi(int numProcessors,int numOperationProccesor, int start, int end, int residuo, int iteraciones){
-    std::vector<thread> threads(numProcessors);
-    for(int i = 0; i<numProcessors;i++){
-        if(i==numProcessors-1){
-            threads[i] = thread(calculoPi, start, end+residuo, iteraciones);
-        }else{
-             threads[i] = thread(calculoPi, start, end, iteraciones);
-        }
-        start = end;
-        end += numOperationProccesor;
-    }
-    
-    ListProcessThreads(GetCurrentProcessId());
-
-    for(auto& th : threads){
-        th.join();
-    }
-}
 
 void calculoPi(double inicio, double fin, double n) {
     double N = n;
