@@ -61,7 +61,7 @@ int main(void)
 {
     int cpu;
     get_processor_number();
-    self = OpenProcess( PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, FALSE, 19000);
+    self = OpenProcess( PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, FALSE, 7636);
     printf("Number of proccessors: %d\r\n", numProcessors);
 
     cpu = getCurrentCPU();

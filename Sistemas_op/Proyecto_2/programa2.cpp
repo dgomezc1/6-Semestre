@@ -8,9 +8,11 @@ typedef long long int64_t;
 typedef unsigned long long uint64_t;
 static int numProcessors;
 HANDLE hProcess;
-int64_t last_time = 0;
-int64_t last_system_time = 0;
+static int64_t last_time = 0;
+static int64_t last_system_time = 0;
+int bandera_cpu = 0;
 
+/// time convert
 static uint64_t file_time_2_utc(const FILETIME *ftime){
     LARGE_INTEGER li;
     li.LowPart = ftime->dwLowDateTime;
@@ -29,6 +31,11 @@ int getCurrentCPU(){
     int64_t system_time, time, system_time_delta, time_delta;
     int cpu = -1;
 
+    if (bandera_cpu > 10){
+        bandera_cpu = 0;
+        return 0;
+    }
+    bandera_cpu +=1;
     GetSystemTimeAsFileTime(&now);
     if (!GetProcessTimes(hProcess, &creation_time, &exit_time, &kernel_time, &user_time)){
         // can not find the process
@@ -40,6 +47,7 @@ int getCurrentCPU(){
         last_system_time = system_time;
         last_time = time;
         return getCurrentCPU();
+
     }
     system_time_delta = system_time - last_system_time;
     time_delta = time - last_time;
@@ -53,6 +61,12 @@ int getCurrentCPU(){
     return cpu;
 }
 
+float memoryPercent(PROCESS_MEMORY_COUNTERS pmc){
+    MEMORYSTATUSEX statex;
+    statex.dwLength = sizeof (statex);
+    GlobalMemoryStatusEx (&statex);
+    return (float)((pmc.WorkingSetSize/DIV)/(statex.ullTotalPhys/DIV));
+}
 
 void PrintProcessNameAndID( DWORD processID)
 {
@@ -60,7 +74,8 @@ void PrintProcessNameAndID( DWORD processID)
     IO_COUNTERS counter;
     TCHAR szProcessName[MAX_PATH] = TEXT("<unknown>");
     int cpu;
-    HANDLE hProcess = OpenProcess( PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,FALSE, processID );
+    float memory;
+    hProcess = OpenProcess( PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,FALSE, processID );
     // Get the process name.
     if(NULL != hProcess){
         HMODULE hMod;
@@ -68,15 +83,16 @@ void PrintProcessNameAndID( DWORD processID)
         if(EnumProcessModules( hProcess, &hMod, sizeof(hMod), &cbNeeded)){
             GetModuleBaseName( hProcess, hMod, szProcessName, sizeof(szProcessName)/sizeof(TCHAR) );
             GetProcessMemoryInfo( hProcess, &pmc, sizeof(pmc));
-            GetProcessIoCounters(hProcess, &counter);
+            //memory = memoryPercent(pmc);
             GetProcessIoCounters(hProcess, &counter);
             cpu = getCurrentCPU();
             // sleep then get delta time of system and process, 100ms - 10s
             Sleep(500);
-            cpu = getCurrentCPU();
+            cpu = getCurrentCPU();        
         }
     }
     // Print the process name and identifier.
+    //printf("********************************\nPorcentaje memoria: %d   ", memory);
     printf("%s  (PID: %u)    CPU:%d    %d KB    Disco:%d\n", szProcessName, processID,cpu, pmc.WorkingSetSize/DIV, counter.WriteTransferCount);
 
     // Release the handle to the process.
@@ -85,10 +101,10 @@ void PrintProcessNameAndID( DWORD processID)
 
 int main( void )
 {
+    get_processor_number();
     // Get the list of process identifiers.
     DWORD aProcesses[1024], cbNeeded, cProcesses;
     unsigned int i;
-    get_processor_number();
     if(!EnumProcesses( aProcesses, sizeof(aProcesses), &cbNeeded)){
         return 1;
     }
