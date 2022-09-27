@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <Python.h>
 #include <stdio.h>
 #include <psapi.h>
 #include <tchar.h>
@@ -9,68 +10,45 @@
 #define DIV 1024
 #define WIDTH 7
 
-void PrintMemoryInfo( DWORD processID )
-{
+static PyObject* retorno_memoria(PyObject* self, PyObject* args){
+    DWORD aProcesses[1024], cbNeeded, cProcesses;
+    unsigned int i;
+
+    EnumProcesses( aProcesses, sizeof(aProcesses), &cbNeeded );
+    cProcesses = cbNeeded / sizeof(DWORD);
+    PyObject* results = PyList_New(cProcesses);
+    for ( i = 0; i < cProcesses; i++ ){
+        int dato;
+        dato = PrintMemoryInfo(aProcesses[i]);
+        PyObject* pytho_int = Py_BuildValue("i", dato);
+        PyList_SetItem(results, i, pytho_int);
+    }
+    return results;
+}
+
+int PrintMemoryInfo( DWORD processID ){
     HANDLE hProcess;
     PROCESS_MEMORY_COUNTERS pmc;
-
-    // Print the process identifier.
-
     printf( "\nProcess ID: %u\n", processID );
-
-    // Print information about the memory usage of the process.
-
     hProcess = OpenProcess(  PROCESS_QUERY_INFORMATION |
                                     PROCESS_VM_READ,
                                     FALSE, processID );
-    if (NULL == hProcess)
-        return;
-
-    if ( GetProcessMemoryInfo( hProcess, &pmc, sizeof(pmc)) )
-    {
-        printf( "\tPageFaultCount: 0x%08X\n", pmc.PageFaultCount );
-        printf( "\tPeakWorkingSetSize: 0x%08X\n", 
-                  pmc.PeakWorkingSetSize );
-        _tprintf (TEXT("There are %d total KB of WorkingSetSize.\n"),
-            pmc.WorkingSetSize/DIV);
-        printf( "\tQuotaPeakPagedPoolUsage: 0x%08X\n", 
-                  pmc.QuotaPeakPagedPoolUsage );
-        printf( "\tQuotaPagedPoolUsage: 0x%08X\n", 
-                  pmc.QuotaPagedPoolUsage );
-        printf( "\tQuotaPeakNonPagedPoolUsage: 0x%08X\n", 
-                  pmc.QuotaPeakNonPagedPoolUsage );
-        printf( "\tQuotaNonPagedPoolUsage: 0x%08X\n", 
-                  pmc.QuotaNonPagedPoolUsage );
-        printf( "\tPagefileUsage: 0x%08X\n", pmc.PagefileUsage ); 
-        printf( "\tPeakPagefileUsage: 0x%08X\n", 
-                  pmc.PeakPagefileUsage );
+    if (NULL == hProcess) return;
+    if ( GetProcessMemoryInfo( hProcess, &pmc, sizeof(pmc)) ){
+        return pmc.WorkingSetSize/DIV;
     }
 
     CloseHandle( hProcess );
 }
 
-int main( void )
-{
-    // Get the list of process identifiers.
+static PyMethodDef OperacionesMethos[]={
+    {"memoria", retorno_memoria, METH_VARARGS,"Retorno de memoria"}
+};
 
-    DWORD aProcesses[1024], cbNeeded, cProcesses;
-    unsigned int i;
+static struct  PyModuleDef OperacionesM={
+    PyModuleDef_HEAD_INIT, "retorno_memoria", "", -1, OperacionesMethos
+};
 
-    if ( !EnumProcesses( aProcesses, sizeof(aProcesses), &cbNeeded ) )
-    {
-        return 1;
-    }
-
-    // Calculate how many process identifiers were returned.
-
-    cProcesses = cbNeeded / sizeof(DWORD);
-
-    // Print the memory usage for each process
-
-    for ( i = 0; i < cProcesses; i++ )
-    {
-        PrintMemoryInfo( aProcesses[i] );
-    }
-
-    return 0;
+PyMODINIT_FUNC initOperacion(void){
+    return PyModule_Create(&OperacionesM);
 }

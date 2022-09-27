@@ -3,7 +3,9 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**",
+                "C:/mingw64/include/python3.9",
+                "D:/Programas/include"
             ],
             "defines": [
                 "_DEBUG",
