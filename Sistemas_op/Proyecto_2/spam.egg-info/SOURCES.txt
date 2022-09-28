@@ -1,0 +1,6 @@
+mem.cpp
+setup.py
+spam.egg-info/PKG-INFO
+spam.egg-info/SOURCES.txt
+spam.egg-info/dependency_links.txt
+spam.egg-info/top_level.txt
