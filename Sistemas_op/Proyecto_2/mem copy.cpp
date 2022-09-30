@@ -65,84 +65,46 @@ int getCurrentCPU(){
     cpu = (int)((system_time_delta * 100 + time_delta / 2) / time_delta);
     last_system_time = system_time;
     last_time = time;
-    if (cpu >= 100 || cpu <0){
-        return 0;
-    }
     return cpu;
 }
 
-PyObject* priority_process(){
-    DWORD dwPriorityClass;
-    dwPriorityClass = GetPriorityClass( hProcess );
-    PyObject* priority;
-    if(dwPriorityClass == 256){
-        priority = Py_BuildValue("s", "Real time");
-    }else if (dwPriorityClass == 128){
-        priority= Py_BuildValue("s", "High");
-    }else if (dwPriorityClass ==32768){
-        priority = Py_BuildValue("s", "Above Normal");
-    }else if (dwPriorityClass ==32){
-        priority = Py_BuildValue("s", "Normal");
-    }else if (dwPriorityClass ==16384){
-        priority = Py_BuildValue("s", "Below Normal");
-    }else if (dwPriorityClass ==64){
-        priority = Py_BuildValue("s", "IDLE");
-    }else{
-        priority = Py_BuildValue("s", "unknown");
-    }
-    return priority;
-}
+int PrintMemoryInfo( DWORD processID ){
 
-PyObject* PrintMemoryInfo( DWORD processID ){
     PROCESS_MEMORY_COUNTERS pmc;
-    IO_COUNTERS counter;
-    HMODULE hMod;
-    DWORD cbNeeded;
-    TCHAR szProcessName[MAX_PATH] = TEXT("<unknown>");
-    PyObject* priority;
-    int cpu;
     //printf( "\nProcess ID: %u\n", processID );
-    hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, FALSE, processID);
-    if (NULL == hProcess) return Py_BuildValue("i", 0);
-    if (EnumProcessModules( hProcess, &hMod, sizeof(hMod), &cbNeeded) ){
-        GetModuleBaseName( hProcess, hMod, szProcessName, sizeof(szProcessName)/sizeof(TCHAR) );
-        GetProcessMemoryInfo( hProcess, &pmc, sizeof(pmc));
-        GetProcessIoCounters(hProcess, &counter);
-        cpu = getCurrentCPU();
-        Sleep(500);
-        cpu = getCurrentCPU();
-        priority= priority_process();
-    }else{
-        return Py_BuildValue("i", 0);
+    hProcess = OpenProcess(  PROCESS_QUERY_INFORMATION |
+                                    PROCESS_VM_READ,
+                                    FALSE, processID );
+    if (NULL == hProcess) return 0;
+    if ( GetProcessMemoryInfo( hProcess, &pmc, sizeof(pmc)) ){
     }
-    //printf("%s  (PID: %u)    CPU:%d    %d KB    Disco:%d\n", szProcessName, processID,cpu, pmc.WorkingSetSize/DIV, counter.WriteTransferCount);
-    PyObject* dup = PyList_New(6);
-    PyObject* process_name = Py_BuildValue("s", szProcessName);
-    PyObject* process = Py_BuildValue("i", processID);
-    PyObject* cpu1 = Py_BuildValue("i", cpu);
-    PyObject* memoria = Py_BuildValue("i", pmc.WorkingSetSize/1024);
-    PyObject* disco = Py_BuildValue("i", counter.WriteTransferCount);
-    PyList_SetItem(dup, 0, process);
-    PyList_SetItem(dup, 1, process_name);
-    PyList_SetItem(dup, 2, memoria);
-    PyList_SetItem(dup, 3, disco);
-    PyList_SetItem(dup, 4, cpu1);
-    PyList_SetItem(dup, 5, priority);
 
     CloseHandle( hProcess );
-    return dup;
+    return pmc.WorkingSetSize/1024;
 }
 
 PyObject* retorno_memoria(PyObject *self, PyObject *args){
-    get_processor_number();
     DWORD aProcesses[1024], cbNeeded, cProcesses;
     unsigned int i;
+
     EnumProcesses( aProcesses, sizeof(aProcesses), &cbNeeded );
     cProcesses = cbNeeded / sizeof(DWORD);
     PyObject* results = PyList_New(cProcesses);
+    int cpu = 0;
     for ( i = 0; i < cProcesses; i++ ){
-        PyObject* dato = PrintMemoryInfo(aProcesses[i]);  
-        PyList_SetItem(results, i, dato);
+        int dato;
+        PyObject* dup = PyList_New(3);
+        dato = PrintMemoryInfo(aProcesses[i]);
+        //cpu = getCurrentCPU();
+        //Sleep(500);
+        cpu = 1; 
+        PyObject* pytho_int = Py_BuildValue("i", dato);
+        PyObject* process = Py_BuildValue("i", aProcesses[i]);
+        PyObject* cpu1 = Py_BuildValue("i", cpu);
+        PyList_SetItem(dup, 0, process);
+        PyList_SetItem(dup, 1, pytho_int);
+        PyList_SetItem(dup, 2, cpu1);
+        PyList_SetItem(results, i, dup);
     }
     return results;
 }
