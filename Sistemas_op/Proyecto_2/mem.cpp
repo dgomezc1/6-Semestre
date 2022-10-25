@@ -7,16 +7,11 @@
 // To ensure correct resolution of symbols, add Psapi.lib to TARGETLIBS
 // and compile with -DPSAPI_VERSION=1
 
-//#define DIV 1024
-//#define WIDTH 7
 
 #define DIV 1024
 typedef long long int64_t;
 typedef unsigned long long uint64_t;
-static int numProcessors;
 HANDLE hProcess;
-static int64_t last_time = 0;
-static int64_t last_system_time = 0;
 int bandera_cpu = 0;
 
 /// time convert
@@ -27,48 +22,62 @@ static uint64_t file_time_2_utc(const FILETIME *ftime){
     return li.QuadPart;
 }
 // get CPU num
-void get_processor_number(){
-    SYSTEM_INFO info;
-    GetSystemInfo(&info);
-    numProcessors = (int)info.dwNumberOfProcessors;
+static int get_processor_number()
+{
+  SYSTEM_INFO info;
+  GetSystemInfo(&info);
+  return (int)info.dwNumberOfProcessors;
 }
 
-int getCurrentCPU(){
-    FILETIME now,  creation_time, exit_time, kernel_time, user_time;
-    int64_t system_time, time, system_time_delta, time_delta;
-    int cpu = -1;
-
-    if (bandera_cpu > 10){
-        bandera_cpu = 0;
-        return 0;
-    }
-    bandera_cpu +=1;
-    GetSystemTimeAsFileTime(&now);
-    if (!GetProcessTimes(hProcess, &creation_time, &exit_time, &kernel_time, &user_time)){
-        // can not find the process
-        exit(EXIT_FAILURE);
-    }
-    system_time = (file_time_2_utc(&kernel_time) + file_time_2_utc(&user_time)) / numProcessors;
-    time = file_time_2_utc(&now);
-    if ((last_system_time == 0) || (last_time == 0)){
-        last_system_time = system_time;
-        last_time = time;
-        return getCurrentCPU();
-
-    }
-    system_time_delta = system_time - last_system_time;
-    time_delta = time - last_time;
-
-    if (time_delta == 0){
-        return getCurrentCPU();
-    }
-    cpu = (int)((system_time_delta * 100 + time_delta / 2) / time_delta);
-    last_system_time = system_time;
-    last_time = time;
-    if (cpu >= 100 || cpu <0){
-        return 0;
-    }
-    return cpu;
+int getCurrentCPU(int pid){
+  static int processor_count_ = -1;
+  static int64_t last_time_ = 0;
+  static int64_t last_system_time_ = 0;
+  FILETIME now;
+  FILETIME creation_time;
+  FILETIME exit_time;
+  FILETIME kernel_time;
+  FILETIME user_time;
+  int64_t system_time;
+  int64_t time;
+  int64_t system_time_delta;
+  int64_t time_delta;
+  int cpu = -1;
+  if (processor_count_ == -1)
+  {
+    processor_count_ = get_processor_number();
+  }
+  if(bandera_cpu >= 40){
+    bandera_cpu = 0;
+    return 0;
+  }
+  bandera_cpu +=1;
+  GetSystemTimeAsFileTime(&now);
+  HANDLE hProcess1 = OpenProcess(PROCESS_ALL_ACCESS, false, pid);
+  if (!GetProcessTimes(hProcess1, &creation_time, &exit_time, &kernel_time, &user_time))
+  {
+    // can not find the process
+    exit(EXIT_FAILURE);
+  }
+  system_time = (file_time_2_utc(&kernel_time) + file_time_2_utc(&user_time)) / processor_count_;
+  time = file_time_2_utc(&now);
+  if ((last_system_time_ == 0) || (last_time_ == 0))
+  {
+    last_system_time_ = system_time;
+    last_time_ = time;
+    return getCurrentCPU(pid);
+  }
+  system_time_delta = system_time - last_system_time_;
+  time_delta = time - last_time_;
+  if (time_delta == 0)
+  {
+    return getCurrentCPU(pid);
+  }
+  cpu = (int)((system_time_delta * 100 + time_delta / 2) / time_delta);
+  last_system_time_ = system_time;
+  last_time_ = time;
+  CloseHandle( hProcess1 );
+  return cpu;
 }
 
 PyObject* priority_process(){
@@ -105,12 +114,14 @@ PyObject* PrintMemoryInfo( DWORD processID ){
     hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, FALSE, processID);
     if (NULL == hProcess) return Py_BuildValue("i", 0);
     if (EnumProcessModules( hProcess, &hMod, sizeof(hMod), &cbNeeded) ){
+        cpu = getCurrentCPU(processID);
+        Sleep(50);
+        cpu = getCurrentCPU(processID);
+        Sleep(50);
+        cpu = getCurrentCPU(processID);
         GetModuleBaseName( hProcess, hMod, szProcessName, sizeof(szProcessName)/sizeof(TCHAR) );
         GetProcessMemoryInfo( hProcess, &pmc, sizeof(pmc));
         GetProcessIoCounters(hProcess, &counter);
-        cpu = getCurrentCPU();
-        Sleep(500);
-        cpu = getCurrentCPU();
         priority= priority_process();
     }else{
         return Py_BuildValue("i", 0);
@@ -134,7 +145,6 @@ PyObject* PrintMemoryInfo( DWORD processID ){
 }
 
 PyObject* retorno_memoria(PyObject *self, PyObject *args){
-    get_processor_number();
     DWORD aProcesses[1024], cbNeeded, cProcesses;
     unsigned int i;
     EnumProcesses( aProcesses, sizeof(aProcesses), &cbNeeded );
@@ -158,12 +168,3 @@ static struct  PyModuleDef OperacionesM={
 PyMODINIT_FUNC PyInit_spam(void){
     return PyModule_Create(&OperacionesM);
 }
-
-/*
- PyMODINIT_FUNC PyInit_spam(void){
-    PyObject* m = PyModule_Create(&OperacionesM);
-    if (m ==NULL){
-        return NULL;
-    }
-    return m;
-}*/

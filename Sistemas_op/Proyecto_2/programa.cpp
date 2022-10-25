@@ -8,8 +8,6 @@ typedef long long int64_t;
 typedef unsigned long long uint64_t;
 static int numProcessors;
 HANDLE hProcess;
-int64_t last_time = 0;
-int64_t last_system_time = 0;
 
 static uint64_t file_time_2_utc(const FILETIME *ftime){
     LARGE_INTEGER li;
@@ -25,6 +23,8 @@ void get_processor_number(){
 }
 
 int getCurrentCPU(){
+    static int64_t last_time = 0;
+    static int64_t last_system_time = 0;
     FILETIME now,  creation_time, exit_time, kernel_time, user_time;
     int64_t system_time, time, system_time_delta, time_delta;
     int cpu = -1;
@@ -72,7 +72,7 @@ void PrintProcessNameAndID( DWORD processID)
             GetProcessIoCounters(hProcess, &counter);
             cpu = getCurrentCPU();
             // sleep then get delta time of system and process, 100ms - 10s
-            Sleep(500);
+            Sleep(100);
             cpu = getCurrentCPU();
         }
     }

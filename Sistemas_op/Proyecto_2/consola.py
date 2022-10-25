@@ -1,22 +1,26 @@
-from rich.console import Console
-from rich.layout import Layout
+import random
+import time
 
-console = Console()
-layout = Layout()
+from rich.live import Live
+from rich.table import Table
 
-# Divide the "screen" in to three parts
-layout.split(
-    Layout(name="header", size=3),
-    Layout(ratio=1, name="main"),
-    Layout(size=10, name="footer"),
-)
-# Divide the "main" layout in to "side" and "body"
-layout["main"].split(
-    Layout(name="side"),
-    Layout(name="body", ratio=2),
-    direction="horizontal"
-)
-# Divide the "side" layout in to two
-layout["side"].split(Layout(), Layout())
 
-console.print(layout)
+def generate_table() -> Table:
+    """Make a new table."""
+    table = Table()
+    table.add_column("ID")
+    table.add_column("Value")
+    table.add_column("Status")
+
+    for row in range(random.randint(2, 6)):
+        value = random.random() * 100
+        table.add_row(
+            f"{row}", f"{value:3.2f}", "[red]ERROR" if value < 50 else "[green]SUCCESS"
+        )
+    return table
+
+
+with Live(generate_table(), refresh_per_second=4) as live:
+    for _ in range(40):
+        time.sleep(0.4)
+        live.update(generate_table())
